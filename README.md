@@ -62,17 +62,6 @@ The application uses a relational database with the following tables:
    DATABASE_URI=sqlite:///lunchmate.db
    ```
 
-5. Initialize the database
-   ```
-   flask run
-   ```
-   (The database will be automatically created on first run)
-
-6. Access the application
-   ```
-   http://localhost:5000
-   ```
-
 ## Database Insertion
 
 1. Create the database 'lunchapp' (or any other name)
