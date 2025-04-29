@@ -73,89 +73,13 @@ The application uses a relational database with the following tables:
    http://localhost:5000
    ```
 
-## Database Migration
+## Database Insertion
 
-If you're upgrading from a previous version, you'll need to migrate your database to the new normalized schema. We've converted LunchPreference from using comma-separated strings to a normalized schema with separate tables.
+1. Create the database 'lunchapp' (or any other name)
+2. Run 'python script/fill_db.py' and it will fill the database with all the required value.
 
-To run the migration:
-
-1. First, ensure you have a backup of your database
+## Running the App
+Execute the command
+ ```
+   python app.py
    ```
-   cp lunchmate.db lunchmate.db.backup
-   ```
-
-2. Run the migration script
-   ```
-   ./run_migration.sh
-   ```
-   
-   This script will:
-   - Create a timestamped backup of your database
-   - Migrate data from old columns to new normalized tables
-   - Remove the old columns from the database schema
-   - Print a summary of the migration
-
-For more details about the migration process, see [README_MIGRATION.md](README_MIGRATION.md).
-
-## Project Structure
-
-```
-lunchmate/
-├── app.py                 # Main application file
-├── models/                # Database models
-│   └── models.py          # SQLAlchemy models
-├── controllers/           # Route controllers
-│   ├── auth.py            # Authentication routes
-│   ├── profile.py         # Profile management routes
-│   ├── matching.py        # Matching system routes
-│   └── messaging.py       # Messaging routes
-├── forms/                 # Form definitions
-│   ├── auth_forms.py      # Authentication forms
-│   └── profile_forms.py   # Profile management forms
-├── static/                # Static files
-│   ├── css/               # CSS stylesheets
-│   ├── js/                # JavaScript files
-│   └── images/            # Image files
-├── templates/             # HTML templates
-│   ├── base.html          # Base template
-│   ├── index.html         # Landing page
-│   ├── auth/              # Authentication templates
-│   ├── profile/           # Profile templates
-│   ├── matching/          # Matching templates
-│   └── messaging/         # Messaging templates
-├── migrate_preferences.py # Migration script for preferences
-├── alter_schema.py        # Schema alteration script
-├── run_migration.sh       # Migration runner script
-├── add_conversation_starters.py # Add conversation starters table and seed data
-└── requirements.txt       # Python dependencies
-```
-
-## Future Enhancements
-
-- Email verification for university emails
-- AI-powered matching algorithm
-- Group lunch scheduling
-- Integration with campus dining systems
-- Mobile app version
-- Smarter conversation starters based on deeper user profiling
-
-## Conversation Starters Feature
-
-The app now includes AI-generated conversation starters to help users break the ice when messaging matches. These starters are:
-
-1. Personalized based on user interests (food preferences, education, etc.)
-2. Categorized by topic (Food, Education, Hobbies, General)
-3. Easily accessible in the messaging interface
-4. Displayed alongside common availability to facilitate scheduling
-
-To add the conversation starters feature to your deployment:
-
-1. Run the migration script
-   ```
-   python add_conversation_starters.py
-   ```
-
-2. Restart your application
-   ```
-   flask run
-   ``` 
