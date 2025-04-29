@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav class="nav nav-tabs">
+                <a class="nav-link {% if section == 'discover' %}active{% endif %}" href="{{ url_for('matching.discover') }}">
+                    <i class="bi bi-search me-1"></i>Discover
+                </a>
+                <a class="nav-link {% if section == 'liked' %}active{% endif %}" href="{{ url_for('matching.liked_users') }}">
+                    <i class="bi bi-heart-fill me-1"></i>Liked
+                </a>
+                <a class="nav-link {% if section == 'matched' %}active{% endif %}" href="{{ url_for('matching.matched_users') }}">
+                    <i class="bi bi-people-fill me-1"></i>Matched
+                </a>
+            </nav>
+        </div>
+    </div>
+    
+    {% block matching_content %}{% endblock %}
+</div>
+{% endblock %} 

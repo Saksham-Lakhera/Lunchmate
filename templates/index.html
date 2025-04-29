@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}LunchMate - Connect with University Students Over Lunch{% endblock %}
+
+{% block content %}
+<div class="row align-items-center py-5">
+    <div class="col-md-6 mb-4 mb-md-0">
+        <h1 class="display-4 fw-bold">Meet Students Over Lunch</h1>
+        <p class="lead">LunchMate connects university students for casual lunch meetups, making it easy to expand your social circle and build meaningful connections.</p>
+        <p class="mb-4">Finding someone to have lunch with shouldn't be hard. Whether you're a new student, international student, or just looking to meet new people, LunchMate helps you connect with fellow students who share your interests.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Sign Up Now</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg px-4">Sign In</a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="bg-light p-5 rounded shadow-lg text-center">
+            <i class="bi bi-people-fill text-primary display-1 mb-3"></i>
+            <h3>Connect with students at your university</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row py-5">
+    <div class="col-12 text-center mb-5">
+        <h2 class="fw-bold">How It Works</h2>
+        <p class="lead text-muted">Simple steps to make new lunch connections</p>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="text-center p-4 bg-light rounded h-100">
+            <div class="p-3 mb-3 bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-person-plus-fill fs-1"></i>
+            </div>
+            <h3 class="h4 mb-3">Create Your Profile</h3>
+            <p>Sign up with your university email and create a profile showcasing your interests and availability.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="text-center p-4 bg-light rounded h-100">
+            <div class="p-3 mb-3 bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-search-heart fs-1"></i>
+            </div>
+            <h3 class="h4 mb-3">Match with Students</h3>
+            <p>Browse and match with students from your university who share similar interests and availability.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="text-center p-4 bg-light rounded h-100">
+            <div class="p-3 mb-3 bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-cup-hot-fill fs-1"></i>
+            </div>
+            <h3 class="h4 mb-3">Meet for Lunch</h3>
+            <p>Chat with your matches, plan a lunch meeting, and enjoy a meal together at your campus dining or nearby restaurant.</p>
+        </div>
+    </div>
+</div>
+
+<div class="text-center py-5">
+    <h2 class="fw-bold mb-4">Ready to find your next lunch buddy?</h2>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-5">Join LunchMate Today</a>
+</div>
+{% endblock %} 

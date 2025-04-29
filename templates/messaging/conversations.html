@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Conversations - LunchMate{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Your Conversations</h2>
+
+{% if conversations %}
+<div class="list-group shadow-sm">
+    {% for convo in conversations %}
+    <a href="{{ url_for('messaging.conversation', user_id=convo.user.id) }}" class="list-group-item list-group-item-action {% if convo.unread_count > 0 %}list-group-item-primary{% endif %}">
+        <div class="d-flex w-100 justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <img src="{{ url_for('static', filename=convo.photo_url) }}" alt="{{ convo.profile.first_name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                <div>
+                    <h5 class="mb-1">{{ convo.profile.first_name }} {{ convo.profile.last_name }}</h5>
+                    <p class="mb-1 text-muted small">{{ convo.profile.department }} - {{ convo.profile.university }}</p>
+                    {% if convo.last_message %}
+                    <p class="mb-1 text-truncate" style="max-width: 300px;">
+                        {% if convo.last_message.sender_id == current_user.id %}
+                        <span class="text-muted">You: </span>
+                        {% endif %}
+                        {{ convo.last_message.content }}
+                    </p>
+                    {% else %}
+                    <p class="mb-1 text-muted"><i>Start a conversation</i></p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-end">
+                {% if convo.last_message %}
+                <small class="text-muted">{{ convo.last_message.created_at.strftime('%b %d, %H:%M') }}</small>
+                {% endif %}
+                {% if convo.unread_count > 0 %}
+                <span class="badge bg-primary rounded-pill ms-2">{{ convo.unread_count }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle-fill me-2"></i> You don't have any conversations yet. Start chatting with your matches!
+</div>
+
+<div class="text-center py-5">
+    <i class="bi bi-chat-dots-fill display-1 text-muted mb-3"></i>
+    <h3>No conversations yet</h3>
+    <p class="mb-4">Start chatting with your matches to plan your lunch meetups.</p>
+    <a href="{{ url_for('matching.matches_list') }}" class="btn btn-primary btn-lg">View Matches</a>
+</div>
+{% endif %}
+{% endblock %} 

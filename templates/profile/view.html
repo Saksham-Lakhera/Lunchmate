@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Profile - LunchMate{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                {% set photo_url = 'images/default-profile.png' %}
+                {% for photo in photos %}
+                    {% if photo.is_primary %}
+                        {% set photo_url = photo.photo_path %}
+                    {% endif %}
+                {% endfor %}
+                <img src="{{ url_for('static', filename=photo_url) }}" alt="{{ profile.first_name }}" class="profile-avatar mb-3">
+                <h3>{{ profile.first_name }} {{ profile.last_name }}</h3>
+                <p class="text-muted">{{ profile.university }}</p>
+                <p class="text-muted">{{ profile.department }}</p>
+                
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('profile.edit_profile') }}" class="btn btn-primary mb-2">Edit Profile</a>
+                    <a href="{{ url_for('profile.manage_photos') }}" class="btn btn-outline-secondary mb-2">Manage Photos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h4 class="card-title">About Me</h4>
+                <p>{{ profile.bio or 'No bio added yet. Tell others about yourself!' }}</p>
+                
+                <hr>
+                
+                <h4 class="card-title">Education</h4>
+                <p><strong>University:</strong> {{ profile.university }}</p>
+                <p><strong>Department:</strong> {{ profile.department or 'Not specified' }}</p>
+                {% if profile.graduation_year %}
+                <p><strong>Graduation Year:</strong> {{ profile.graduation_year }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Lunch Preferences</h4>
+                    <a href="{{ url_for('profile.manage_preferences') }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                </div>
+                
+                {% if preferences %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Cuisine:</strong> 
+                            {% if preferences.cuisine_preferences %}
+                                <ul class="list-inline mb-0">
+                                {% for cuisine in preferences.cuisine_preferences %}
+                                    <li class="list-inline-item">
+                                        <span class="badge bg-primary">{{ cuisine.cuisine_type }}</span>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                No preference
+                            {% endif %}
+                        </p>
+                        
+                        <p><strong>Dietary Restrictions:</strong> 
+                            {% if preferences.dietary_restrictions %}
+                                <ul class="list-inline mb-0">
+                                {% for restriction in preferences.dietary_restrictions %}
+                                    <li class="list-inline-item">
+                                        <span class="badge bg-secondary">{{ restriction.restriction_type }}</span>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                None
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Budget:</strong> {% if preferences.max_budget %}${{ preferences.max_budget }}{% else %}Not specified{% endif %}</p>
+                        <p><strong>Group Size:</strong> 
+                            {% if preferences.preferred_group_size == 1 %}One-on-one
+                            {% elif preferences.preferred_group_size == 2 %}Small group (3-4)
+                            {% elif preferences.preferred_group_size == 3 %}Large group (5+)
+                            {% else %}Not specified
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <p>No preferences set yet. <a href="{{ url_for('profile.manage_preferences') }}">Add your preferences</a> to improve your matching!</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Available for Lunch</h4>
+                    <a href="{{ url_for('profile.manage_availability') }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                </div>
+                
+                {% if availabilities %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for availability in availabilities %}
+                            <tr>
+                                <td>
+                                    {% if availability.day_of_week == 0 %}Monday
+                                    {% elif availability.day_of_week == 1 %}Tuesday
+                                    {% elif availability.day_of_week == 2 %}Wednesday
+                                    {% elif availability.day_of_week == 3 %}Thursday
+                                    {% elif availability.day_of_week == 4 %}Friday
+                                    {% elif availability.day_of_week == 5 %}Saturday
+                                    {% elif availability.day_of_week == 6 %}Sunday
+                                    {% endif %}
+                                </td>
+                                <td>{{ availability.start_time.strftime('%I:%M %p') }}</td>
+                                <td>{{ availability.end_time.strftime('%I:%M %p') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No availability set yet. <a href="{{ url_for('profile.manage_availability') }}">Add your availability</a> to find lunch matches!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

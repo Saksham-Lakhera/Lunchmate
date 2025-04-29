@@ -1,0 +1,319 @@
+{% extends 'matching/base_matching.html' %}
+
+{% block title %}Your Matches - LunchMate{% endblock %}
+
+{% block matching_content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Your Matches</h2>
+        <p class="text-muted">These people liked you back! Start a conversation or plan a lunch meetup.</p>
+    </div>
+</div>
+
+{% if matched_users %}
+<div class="row">
+    {% for user_data in matched_users %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card match-card shadow-sm h-100">
+            <div class="card-header bg-white border-bottom-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-success rounded-pill">
+                        <i class="bi bi-people-fill me-1"></i> Matched
+                    </span>
+                    <div>
+                        {% if user_data.timing_match %}
+                        <span class="badge bg-success me-1"><i class="bi bi-clock"></i> Time</span>
+                        {% endif %}
+                        
+                        {% if user_data.food_match %}
+                        <span class="badge bg-success"><i class="bi bi-egg-fried"></i> Food</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User photo - clickable to show profile details modal -->
+            <a href="#" data-bs-toggle="modal" data-bs-target="#userModal{{ user_data.user.id }}">
+                <img src="{{ url_for('static', filename=user_data.photo_url) }}" alt="{{ user_data.profile.first_name }}" class="card-img-top">
+                {% if user_data.all_photos and user_data.all_photos|length > 1 %}
+                
+                {% endif %}
+            </a>
+            
+            <div class="card-body">
+                <h5 class="card-title">{{ user_data.profile.first_name }} {{ user_data.profile.last_name }}</h5>
+                <p class="card-text text-muted">{{ user_data.profile.department }} - {{ user_data.profile.university }}</p>
+                
+                {% if user_data.profile.bio %}
+                <p class="card-text">{{ user_data.profile.bio|truncate(100) }}</p>
+                {% endif %}
+                
+                {% if user_data.preferences %}
+                <div class="small">
+                    {% if user_data.preferences.cuisine_preferences %}
+                    <p class="mb-1">
+                        <i class="bi bi-egg-fried me-1"></i> 
+                        {% for cuisine in user_data.preferences.cuisine_preferences[:3] %}
+                            <span class="badge bg-light text-dark">{{ cuisine.cuisine_type }}</span>
+                        {% endfor %}
+                        {% if user_data.preferences.cuisine_preferences|length > 3 %}
+                            <span class="badge bg-light text-dark">+{{ user_data.preferences.cuisine_preferences|length - 3 }} more</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    {% if user_data.preferences.dietary_restrictions %}
+                    <p class="mb-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        {% for restriction in user_data.preferences.dietary_restrictions[:2] %}
+                            <span class="badge bg-light text-dark">{{ restriction.restriction_type }}</span>
+                        {% endfor %}
+                        {% if user_data.preferences.dietary_restrictions|length > 2 %}
+                            <span class="badge bg-light text-dark">+{{ user_data.preferences.dietary_restrictions|length - 2 }} more</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if user_data.recommended_restaurants %}
+                <div class="mt-3">
+                    <h6 class="text-primary"><i class="bi bi-shop me-1"></i> Suggested Places to Meet:</h6>
+                    <div class="list-group small">
+                        {% for restaurant in user_data.recommended_restaurants[:1] %}
+                        <div class="list-group-item list-group-item-action py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ restaurant.name }}</strong>
+                                    <div class="text-muted">{{ restaurant.cuisine_type }}</div>
+                                </div>
+                                <div class="text-end">
+                                    {% for i in range(restaurant.price_range) %}${% endfor %}
+                                    <div>
+                                        {% for i in range(5) %}
+                                            {% if i < restaurant.rating|int %}
+                                            <i class="bi bi-star-fill text-warning small"></i>
+                                            {% elif restaurant.rating - i > 0 and restaurant.rating - i < 1 %}
+                                            <i class="bi bi-star-half text-warning small"></i>
+                                            {% else %}
+                                            <i class="bi bi-star text-warning small"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between">
+                <a href="{{ url_for('messaging.conversation', user_id=user_data.user.id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-chat-dots-fill me-1"></i> Message
+                </a>
+                <form method="POST" action="{{ url_for('matching.unmatch_user', user_id=user_data.user.id) }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Unmatch</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Profile Modal -->
+    <div class="modal fade" id="userModal{{ user_data.user.id }}" tabindex="-1" aria-labelledby="userModalLabel{{ user_data.user.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalLabel{{ user_data.user.id }}">{{ user_data.profile.first_name }} {{ user_data.profile.last_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if user_data.all_photos and user_data.all_photos|length > 0 %}
+                            <div id="userPhotoCarousel{{ user_data.user.id }}" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-indicators">
+                                    {% for photo in user_data.all_photos %}
+                                    <button type="button" data-bs-target="#userPhotoCarousel{{ user_data.user.id }}" data-bs-slide-to="{{ loop.index0 }}" class="{{ 'active' if loop.first else '' }}" aria-current="{{ 'true' if loop.first else 'false' }}" aria-label="Slide {{ loop.index }}"></button>
+                                    {% endfor %}
+                                </div>
+                                <div class="carousel-inner rounded">
+                                    {% for photo in user_data.all_photos %}
+                                    <div class="carousel-item {{ 'active' if loop.first else '' }}">
+                                        <img src="{{ url_for('static', filename=photo.photo_path) }}" class="d-block w-100" alt="Photo of {{ user_data.profile.first_name }}">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% if user_data.all_photos|length > 1 %}
+                                <button class="carousel-control-prev" type="button" data-bs-target="#userPhotoCarousel{{ user_data.user.id }}" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#userPhotoCarousel{{ user_data.user.id }}" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <img src="{{ url_for('static', filename=user_data.photo_url) }}" alt="{{ user_data.profile.first_name }}" class="img-fluid rounded">
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                <div class="alert alert-success">
+                                    <i class="bi bi-people-fill me-1"></i> You matched on {{ user_data.matched_date.strftime('%B %d, %Y') }}
+                                </div>
+                                
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% if user_data.timing_match %}
+                                    <span class="badge bg-success"><i class="bi bi-clock"></i> Time Compatibility</span>
+                                    {% endif %}
+                                    
+                                    {% if user_data.food_match %}
+                                    <span class="badge bg-success"><i class="bi bi-egg-fried"></i> Food Compatibility</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>About</h5>
+                            <p>{{ user_data.profile.bio|default('No bio provided.') }}</p>
+                            
+                            <h5>Details</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Department:</strong> {{ user_data.profile.department }}</li>
+                                <li><strong>University:</strong> {{ user_data.profile.university }}</li>
+                                <li><strong>Graduation Year:</strong> {{ user_data.profile.graduation_year }}</li>
+                            </ul>
+                            
+                            {% if user_data.preferences %}
+                            <h5>Food Preferences</h5>
+                            <div>
+                                {% if user_data.preferences.cuisine_preferences %}
+                                <p class="mb-1">
+                                    <strong>Cuisine:</strong><br>
+                                    {% for cuisine in user_data.preferences.cuisine_preferences %}
+                                        <span class="badge bg-light text-dark mb-1">{{ cuisine.cuisine_type }}</span>
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+                                
+                                {% if user_data.preferences.dietary_restrictions %}
+                                <p class="mb-1">
+                                    <strong>Dietary Restrictions:</strong><br>
+                                    {% for restriction in user_data.preferences.dietary_restrictions %}
+                                        <span class="badge bg-light text-dark mb-1">{{ restriction.restriction_type }}</span>
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+                                
+                                {% if user_data.preferences.max_budget %}
+                                <p class="mb-1">
+                                    <strong>Budget:</strong> ${{ user_data.preferences.max_budget }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Availability section -->
+                            {% if user_data.user.availability %}
+                            <h5>Availability</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Day</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set days = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'} %}
+                                        {% for avail in user_data.user.availability %}
+                                        <tr>
+                                            <td>{{ days[avail.day_of_week] }}</td>
+                                            <td>{{ avail.start_time.strftime('%I:%M %p') }} - {{ avail.end_time.strftime('%I:%M %p') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Recommended restaurants -->
+                            {% if user_data.recommended_restaurants %}
+                            <h5>Recommended Restaurants</h5>
+                            <div class="list-group">
+                                {% for restaurant in user_data.recommended_restaurants %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ restaurant.name }}</strong>
+                                            <div class="text-muted">{{ restaurant.cuisine_type }}</div>
+                                            <div class="small">{{ restaurant.location }}</div>
+                                        </div>
+                                        <div class="text-end">
+                                            {% for i in range(restaurant.price_range) %}${% endfor %}
+                                            <div>
+                                                {% for i in range(5) %}
+                                                    {% if i < restaurant.rating|int %}
+                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                    {% elif restaurant.rating - i > 0 and restaurant.rating - i < 1 %}
+                                                    <i class="bi bi-star-half text-warning"></i>
+                                                    {% else %}
+                                                    <i class="bi bi-star text-warning"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('messaging.conversation', user_id=user_data.user.id) }}" class="btn btn-primary">
+                        <i class="bi bi-chat-dots-fill me-1"></i> Message
+                    </a>
+                    <form method="POST" action="{{ url_for('matching.unmatch_user', user_id=user_data.user.id) }}">
+                        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Unmatch</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    You don't have any matches yet. Like more people to create matches!
+</div>
+{% endif %}
+
+<style>
+/* Image count badge style */
+.image-count-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+/* Ensure carousel images have consistent height */
+.carousel-item img {
+    object-fit: cover;
+    height: 400px;
+}
+
+.carousel-indicators {
+    margin-bottom: 0;
+}
+
+.carousel-inner {
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %} 

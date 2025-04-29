@@ -1,0 +1,405 @@
+{% extends 'matching/base_matching.html' %}
+
+{% block title %}Discover - LunchMate{% endblock %}
+
+{% block matching_content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Discover New Lunch Buddies</h2>
+    </div>
+</div>
+
+{% if users %}
+<div class="row" id="discover-container">
+    {% for user_data in users %}
+    <div class="col-md-6 col-lg-4 mb-4 user-card" data-user-id="{{ user_data.user.id }}">
+        <div class="card match-card shadow-sm h-100">
+            <div class="card-header bg-white border-bottom-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if user_data.timing_match %}
+                        <span class="badge bg-success"><i class="bi bi-clock"></i> Time</span>
+                        {% endif %}
+                        
+                        {% if user_data.food_match %}
+                        <span class="badge bg-success"><i class="bi bi-egg-fried"></i> Food</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User photo - clickable to show profile details modal -->
+            <a href="#" data-bs-toggle="modal" data-bs-target="#userModal{{ user_data.user.id }}">
+                <img src="{{ url_for('static', filename=user_data.photo_url) }}" alt="{{ user_data.profile.first_name }}" class="card-img-top">
+                {% if user_data.all_photos and user_data.all_photos|length > 1 %}
+                <span class="badge bg-dark rounded-pill image-count-badge">
+                    <i class="bi bi-images me-1"></i> {{ user_data.all_photos|length }}
+                </span>
+                {% endif %}
+            </a>
+            
+            <div class="card-body">
+                <h5 class="card-title">{{ user_data.profile.first_name }} {{ user_data.profile.last_name }}</h5>
+                <p class="card-text text-muted">{{ user_data.profile.department }} - {{ user_data.profile.university }}</p>
+                
+                {% if user_data.profile.bio %}
+                <p class="card-text">{{ user_data.profile.bio|truncate(100) }}</p>
+                {% endif %}
+                
+                {% if user_data.preferences %}
+                <div class="small">
+                    {% if user_data.preferences.cuisine_preferences %}
+                    <p class="mb-1">
+                        <i class="bi bi-egg-fried me-1"></i> 
+                        {% for cuisine in user_data.preferences.cuisine_preferences[:3] %}
+                            <span class="badge bg-light text-dark">{{ cuisine.cuisine_type }}</span>
+                        {% endfor %}
+                        {% if user_data.preferences.cuisine_preferences|length > 3 %}
+                            <span class="badge bg-light text-dark">+{{ user_data.preferences.cuisine_preferences|length - 3 }} more</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    {% if user_data.preferences.dietary_restrictions %}
+                    <p class="mb-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        {% for restriction in user_data.preferences.dietary_restrictions[:2] %}
+                            <span class="badge bg-light text-dark">{{ restriction.restriction_type }}</span>
+                        {% endfor %}
+                        {% if user_data.preferences.dietary_restrictions|length > 2 %}
+                            <span class="badge bg-light text-dark">+{{ user_data.preferences.dietary_restrictions|length - 2 }} more</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="match-actions">
+                    <form method="POST" action="{{ url_for('matching.like_user', user_id=user_data.user.id) }}" class="like-form">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-hand-thumbs-up-fill"></i> Like</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('matching.block_user', user_id=user_data.user.id) }}" class="skip-form">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle-fill"></i> Skip</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Profile Modal -->
+    <div class="modal fade" id="userModal{{ user_data.user.id }}" tabindex="-1" aria-labelledby="userModalLabel{{ user_data.user.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalLabel{{ user_data.user.id }}">{{ user_data.profile.first_name }} {{ user_data.profile.last_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if user_data.all_photos and user_data.all_photos|length > 0 %}
+                            <div id="userPhotoCarousel{{ user_data.user.id }}" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-indicators">
+                                    {% for photo in user_data.all_photos %}
+                                    <button type="button" data-bs-target="#userPhotoCarousel{{ user_data.user.id }}" data-bs-slide-to="{{ loop.index0 }}" class="{{ 'active' if loop.first else '' }}" aria-current="{{ 'true' if loop.first else 'false' }}" aria-label="Slide {{ loop.index }}"></button>
+                                    {% endfor %}
+                                </div>
+                                <div class="carousel-inner rounded">
+                                    {% for photo in user_data.all_photos %}
+                                    <div class="carousel-item {{ 'active' if loop.first else '' }}">
+                                        <img src="{{ url_for('static', filename=photo.photo_path) }}" class="d-block w-100" alt="Photo of {{ user_data.profile.first_name }}">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% if user_data.all_photos|length > 1 %}
+                                <button class="carousel-control-prev" type="button" data-bs-target="#userPhotoCarousel{{ user_data.user.id }}" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#userPhotoCarousel{{ user_data.user.id }}" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <img src="{{ url_for('static', filename=user_data.photo_url) }}" alt="{{ user_data.profile.first_name }}" class="img-fluid rounded">
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% if user_data.timing_match %}
+                                    <span class="badge bg-success"><i class="bi bi-clock"></i> Time Compatibility</span>
+                                    {% endif %}
+                                    
+                                    {% if user_data.food_match %}
+                                    <span class="badge bg-success"><i class="bi bi-egg-fried"></i> Food Compatibility</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>About</h5>
+                            <p>{{ user_data.profile.bio|default('No bio provided.') }}</p>
+                            
+                            <h5>Details</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Department:</strong> {{ user_data.profile.department }}</li>
+                                <li><strong>University:</strong> {{ user_data.profile.university }}</li>
+                                <li><strong>Graduation Year:</strong> {{ user_data.profile.graduation_year }}</li>
+                            </ul>
+                            
+                            {% if user_data.preferences %}
+                            <h5>Food Preferences</h5>
+                            <div>
+                                {% if user_data.preferences.cuisine_preferences %}
+                                <p class="mb-1">
+                                    <strong>Cuisine:</strong><br>
+                                    {% for cuisine in user_data.preferences.cuisine_preferences %}
+                                        <span class="badge bg-light text-dark mb-1">{{ cuisine.cuisine_type }}</span>
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+                                
+                                {% if user_data.preferences.dietary_restrictions %}
+                                <p class="mb-1">
+                                    <strong>Dietary Restrictions:</strong><br>
+                                    {% for restriction in user_data.preferences.dietary_restrictions %}
+                                        <span class="badge bg-light text-dark mb-1">{{ restriction.restriction_type }}</span>
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+                                
+                                {% if user_data.preferences.max_budget %}
+                                <p class="mb-1">
+                                    <strong>Budget:</strong> ${{ user_data.preferences.max_budget }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Availability section -->
+                            {% if user_data.user.availability %}
+                            <h5>Availability</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Day</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set days = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'} %}
+                                        {% for avail in user_data.user.availability %}
+                                        <tr>
+                                            <td>{{ days[avail.day_of_week] }}</td>
+                                            <td>{{ avail.start_time.strftime('%I:%M %p') }} - {{ avail.end_time.strftime('%I:%M %p') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!--<div class="modal-footer">
+                    <form method="POST" action="{{ url_for('matching.like_user', user_id=user_data.user.id) }}" class="me-2 like-form">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-hand-thumbs-up-fill"></i> Like</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('matching.block_user', user_id=user_data.user.id) }}" class="skip-form">
+                        <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-x-circle-fill"></i> Skip</button>
+                    </form>
+                </div>-->
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="no-more-users" class="alert alert-info d-none">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    No more potential matches found. Try adjusting your preferences or check back later!
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    No new potential matches found. Try adjusting your preferences or check back later!
+</div>
+{% endif %}
+
+<style>
+/* Image count badge style */
+.image-count-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+/* Ensure carousel images have consistent height */
+.carousel-item img {
+    object-fit: cover;
+    height: 400px;
+}
+
+.carousel-indicators {
+    margin-bottom: 0;
+}
+
+.carousel-inner {
+    border-radius: 0.25rem;
+}
+
+/* Custom styling for the match actions in card footer */
+.match-actions {
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle form submissions
+    setupFormEventHandlers();
+    
+    function setupFormEventHandlers() {
+        // Find all like and skip forms
+        document.querySelectorAll('.like-form, .skip-form').forEach(form => {
+            form.addEventListener('submit', handleFormSubmission);
+        });
+    }
+    
+    function handleFormSubmission(event) {
+        event.preventDefault();
+        const form = event.target;
+        const userId = form.closest('.user-card').dataset.userId;
+        
+        // Send an AJAX request
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove the user card after action
+            const userCard = form.closest('.user-card');
+            if (userCard) {
+                // Add fade-out effect
+                userCard.style.transition = 'opacity 0.3s ease';
+                userCard.style.opacity = '0';
+                
+                // After animation, remove the element and check if we need to refresh
+                setTimeout(() => {
+                    userCard.remove();
+                    
+                    // Find any modals for this user and remove them
+                    const modal = document.querySelector('#userModal' + userId);
+                    if (modal) {
+                        modal.remove();
+                    }
+                    
+                    // Check if this was the last user card
+                    const container = document.getElementById('discover-container');
+                    const remainingCards = container.querySelectorAll('.user-card');
+                    console.log(`Remaining cards: ${remainingCards.length}`);
+                    
+                    if (remainingCards.length === 0) {
+                        console.log("No cards remaining, refreshing page");
+                        // Force reload the page to get a new batch
+                        window.location.reload();
+                    } else {
+                        // Load next user
+                        loadNextUser();
+                    }
+                }, 300);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Just log the error, don't show alerts
+            // Continue with removing the card and loading the next user
+            const userCard = form.closest('.user-card');
+            if (userCard) {
+                userCard.remove();
+                
+                const modal = document.querySelector('#userModal' + userId);
+                if (modal) {
+                    modal.remove();
+                }
+                
+                const container = document.getElementById('discover-container');
+                const remainingCards = container.querySelectorAll('.user-card');
+                
+                if (remainingCards.length === 0) {
+                    window.location.reload();
+                } else {
+                    loadNextUser();
+                }
+            }
+        });
+    }
+    
+    function loadNextUser() {
+        fetch('{{ url_for("matching.next_discover_user") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Append the new user to the container
+                const container = document.getElementById('discover-container');
+                
+                // Create a temporary div to hold the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data.html;
+                
+                // Get the actual user card element
+                const userCard = tempDiv.firstElementChild;
+                userCard.style.opacity = '0';
+                
+                // Append to the container
+                container.appendChild(userCard);
+                
+                // Setup event handlers for the new card
+                const forms = userCard.querySelectorAll('.like-form, .skip-form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', handleFormSubmission);
+                });
+                
+                // Animate the new card
+                setTimeout(() => {
+                    userCard.style.transition = 'opacity 0.3s ease';
+                    userCard.style.opacity = '1';
+                }, 10);
+                
+                // Initialize Bootstrap components for the new card
+                if (typeof bootstrap !== 'undefined') {
+                    const tooltips = userCard.querySelectorAll('[data-bs-toggle="tooltip"]');
+                    tooltips.forEach(tooltip => {
+                        new bootstrap.Tooltip(tooltip);
+                    });
+                    
+                    // Initialize the modal for the new card
+                    const modalElement = document.getElementById('userModal' + data.user_id);
+                    if (modalElement) {
+                        new bootstrap.Modal(modalElement);
+                    }
+                }
+            } else {
+                // No more users - refresh page
+                console.log("No more users available, refreshing page");
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading next user:', error);
+            // Silently refresh the page to recover
+            window.location.reload();
+        });
+    }
+});
+</script>
+{% endblock %} 

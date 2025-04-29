@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversation with {{ profile.first_name }} - LunchMate{% endblock %}
+
+{% block extra_css %}
+<style>
+    .message-container {
+        height: 350px;
+        overflow-y: auto;
+    }
+    .message {
+        border-radius: 18px;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        max-width: 75%;
+    }
+    .message-sent {
+        background-color: #007bff;
+        color: white;
+        margin-left: auto;
+        border-top-right-radius: 3px;
+    }
+    .message-received {
+        background-color: #f1f0f0;
+        color: #212529;
+        margin-right: auto;
+        border-top-left-radius: 3px;
+    }
+    .message-time {
+        font-size: 0.7rem;
+        margin-top: 5px;
+        opacity: 0.7;
+    }
+    .starter-badge {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .starter-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .availability-item {
+        font-size: 0.9rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        margin: 2px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('messaging.conversations') }}" class="me-3 text-dark">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <img src="{{ url_for('static', filename=photo_url) }}" class="rounded-circle me-3" width="40" height="40" alt="{{ profile.first_name }}">
+                    <div>
+                        <h5 class="mb-0">{{ profile.first_name }} {{ profile.last_name }}</h5>
+                        <small class="text-muted">{{ profile.department }}</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body message-container" id="messageContainer">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="message {% if message.sender_id == current_user.id %}message-sent{% else %}message-received{% endif %}" data-id="{{ message.id }}">
+                            {{ message.content }}
+                            <div class="message-time text-end">
+                                {{ message.created_at.strftime('%I:%M %p | %b %d') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted my-5">
+                        <i class="bi bi-chat-dots display-4 mb-3"></i>
+                        <p>This is the beginning of your conversation with {{ profile.first_name }}.</p>
+                        <p>Say hello and plan your lunch meetup!</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-footer bg-white">
+                <form id="messageForm" method="post" class="d-flex">
+                    <input type="text" name="content" id="messageInput" class="form-control me-2" placeholder="Type a message..." required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Conversation Starters -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Conversation Starters</h5>
+            </div>
+            <div class="card-body">
+                {% if conversation_starters %}
+                    <p class="text-muted small">Click on a question to use it in your conversation</p>
+                    {% for starter in conversation_starters %}
+                        <div class="badge starter-badge bg-light text-dark mb-2 p-2 d-block text-start">
+                            {{ starter.question }}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No conversation starters available.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Common Availability -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Common Available Times</h5>
+            </div>
+            <div class="card-body">
+                {% if common_availability and common_availability|length > 0 %}
+                    <p class="text-muted small">Times when both of you are available</p>
+                    {% for day, times in common_availability.items() %}
+                        {% if times|length > 0 %}
+                            <div class="mb-2">
+                                <div class="fw-bold">{{ day }}</div>
+                                {% for time in times %}
+                                    <span class="availability-item">{{ time.start }} - {{ time.end }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No common availability found. <a href="{{ url_for('profile.manage_availability') }}">Update your availability</a> to find times to meet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recommended Restaurants -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-shop me-2"></i>Recommended Restaurants</h5>
+            </div>
+            <div class="card-body">
+                {% if recommended_restaurants and recommended_restaurants|length > 0 %}
+                    <p class="text-muted small">Places you might both enjoy based on your preferences</p>
+                    <div class="list-group">
+                        {% for restaurant in recommended_restaurants %}
+                        <div class="list-group-item list-group-item-action py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ restaurant.name }}</strong>
+                                    <div class="text-muted small">{{ restaurant.cuisine_type }}</div>
+                                    <div class="small text-secondary">{{ restaurant.location }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div>{% for i in range(restaurant.price_range) %}${% endfor %}</div>
+                                    <div>
+                                        {% for i in range(5) %}
+                                            {% if i < restaurant.rating|int %}
+                                            <i class="bi bi-star-fill text-warning small"></i>
+                                            {% elif restaurant.rating - i > 0 and restaurant.rating - i < 1 %}
+                                            <i class="bi bi-star-half text-warning small"></i>
+                                            {% else %}
+                                            <i class="bi bi-star text-warning small"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No restaurant recommendations based on your common preferences.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageContainer = document.getElementById('messageContainer');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        
+        // Scroll to bottom of messages
+        function scrollToBottom() {
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+        
+        // Initial scroll to bottom
+        scrollToBottom();
+        
+        // Handle message submission with AJAX
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const content = messageInput.value.trim();
+            if (!content) return;
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'content=' + encodeURIComponent(content)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Create new message element
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message message-sent';
+                messageDiv.dataset.id = data.id;
+                messageDiv.innerHTML = `
+                    ${data.content}
+                    <div class="message-time text-end">
+                        ${new Date(data.created_at).toLocaleString('en-US', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true,
+                        })} | ${new Date(data.created_at).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                        })}
+                    </div>
+                `;
+                
+                // Append and scroll
+                messageContainer.appendChild(messageDiv);
+                scrollToBottom();
+                
+                // Clear input
+                messageInput.value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        });
+        
+        // Poll for new messages
+        let lastMessageId = document.querySelector('.message:last-child')?.dataset?.id || 0;
+        
+        function pollNewMessages() {
+            fetch(`/messaging/api/messages/{{ user.id }}/poll?last_id=${lastMessageId}`)
+            .then(response => response.json())
+            .then(messages => {
+                if (messages && messages.length > 0) {
+                    messages.forEach(msg => {
+                        // Create new message element
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message message-received';
+                        messageDiv.dataset.id = msg.id;
+                        messageDiv.innerHTML = `
+                            ${msg.content}
+                            <div class="message-time text-end">
+                                ${new Date(msg.created_at).toLocaleString('en-US', {
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    hour12: true,
+                                })} | ${new Date(msg.created_at).toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                })}
+                            </div>
+                        `;
+                        
+                        // Append
+                        messageContainer.appendChild(messageDiv);
+                        
+                        // Update last ID
+                        lastMessageId = msg.id;
+                    });
+                    
+                    // Scroll to bottom if new messages
+                    scrollToBottom();
+                }
+            })
+            .catch(error => console.error('Error polling:', error));
+        }
+        
+        // Handle conversation starters
+        const starterBadges = document.querySelectorAll('.starter-badge');
+        starterBadges.forEach(badge => {
+            badge.addEventListener('click', function() {
+                messageInput.value = this.innerText.trim();
+                messageInput.focus();
+            });
+        });
+        
+        // Poll every 5 seconds
+        setInterval(pollNewMessages, 5000);
+    });
+</script>
+{% endblock %} 
